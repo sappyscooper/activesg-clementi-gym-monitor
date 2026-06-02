@@ -1,0 +1,51 @@
+name: Monitor ActiveSG Clementi Gym Capacity
+
+on:
+  schedule:
+    # 23:00 UTC = 07:00 SGT, 14:00 UTC = 22:00 SGT.
+    - cron: "0 23,0,1,2,3,4,5,6,7,8,9,10,11,12,13,14 * * *"
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: activesg-clementi-monitor
+  cancel-in-progress: false
+
+jobs:
+  scrape:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+          python -m playwright install --with-deps chromium
+
+      - name: Run scraper
+        run: xvfb-run -a python scraper.py --headed --record-error
+
+      - name: Commit and push data
+        run: |
+          git config --local user.email "action@github.com"
+          git config --local user.name "GitHub Action"
+          git add public/data/clementi_gym_capacity.csv public/data/latest.json
+          if git diff --cached --quiet; then
+            echo "No data changes to commit"
+            exit 0
+          fi
+          git commit -m "Update Clementi gym capacity data"
+          git pull --rebase
+          git push
