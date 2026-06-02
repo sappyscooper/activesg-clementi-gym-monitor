@@ -1,0 +1,2 @@
+scraped_at,source_updated_at,facility,status,capacity_percentage,badge_text,raw_text,source
+2026-06-02T15:35:52+00:00,2026-06-02T23:35:00+08:00,Clementi ActiveSG Gym,closed,,Closed,"{""id"":""EcBGtBDRSadwhso2WV0Tk"",""name"":""Clementi ActiveSG Gym"",""capacityPercentage"":0,""type"":""gym"",""isClosed"":true}",api_response
