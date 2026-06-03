@@ -318,6 +318,7 @@ function App() {
       const parsedRecords = parseCsv(text)
         .map(toRecord)
         .filter((record): record is GymRecord => Boolean(record))
+        .filter((record) => record.status !== 'error')
         .sort((a, b) => a.scrapedAt.getTime() - b.scrapedAt.getTime())
 
       setRecords(parsedRecords)
@@ -366,6 +367,7 @@ function App() {
         const parsedRecords = parseCsv(text)
           .map(toRecord)
           .filter((record): record is GymRecord => Boolean(record))
+          .filter((record) => record.status !== 'error')
           .sort((a, b) => a.scrapedAt.getTime() - b.scrapedAt.getTime())
 
         if (!ignore) {
