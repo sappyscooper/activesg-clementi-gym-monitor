@@ -35,6 +35,8 @@ type GitHubFileResponse = {
 
 const CSV_CONTENTS_URL =
   'https://api.github.com/repos/sappyscooper/activesg-clementi-gym-monitor/contents/public/data/clementi_gym_capacity.csv?ref=main'
+const RAW_CSV_URL =
+  'https://raw.githubusercontent.com/sappyscooper/activesg-clementi-gym-monitor/main/public/data/clementi_gym_capacity.csv'
 const SG_TIME_ZONE = 'Asia/Singapore'
 const DAYS = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday']
 const HOURS = Array.from({ length: 16 }, (_, index) => index + 7)
@@ -46,7 +48,24 @@ function base64ToText(content: string) {
   return new TextDecoder().decode(bytes)
 }
 
-async function fetchCsvText() {
+async function fetchRawCsvText() {
+  const response = await fetch(`${RAW_CSV_URL}?t=${Date.now()}`, {
+    cache: 'no-store',
+  })
+
+  if (!response.ok) {
+    throw new Error(`Raw CSV fetch failed with ${response.status}`)
+  }
+
+  const text = await response.text()
+  if (!text.startsWith('scraped_at,')) {
+    throw new Error('Raw CSV response was not a CSV file')
+  }
+
+  return text
+}
+
+async function fetchGitHubApiCsvText() {
   const response = await fetch(`${CSV_CONTENTS_URL}&t=${Date.now()}`, {
     cache: 'no-store',
     headers: {
@@ -64,6 +83,14 @@ async function fetchCsvText() {
   }
 
   return base64ToText(data.content)
+}
+
+async function fetchCsvText() {
+  try {
+    return await fetchRawCsvText()
+  } catch {
+    return fetchGitHubApiCsvText()
+  }
 }
 
 function parseCsvLine(line: string) {
