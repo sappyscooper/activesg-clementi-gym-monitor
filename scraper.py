@@ -294,11 +294,27 @@ def main() -> int:
         action="store_true",
         help="Append an error row instead of failing when the scrape cannot complete.",
     )
+    parser.add_argument(
+        "--skip-on-error",
+        action="store_true",
+        help="Exit successfully without appending a row when the scrape cannot complete.",
+    )
     args = parser.parse_args()
 
     try:
         reading = scrape_capacity(headless=not args.headed)
     except Exception as error:
+        if args.skip_on_error:
+            print(
+                json.dumps(
+                    {
+                        "skipped": True,
+                        "reason": str(error),
+                    },
+                    indent=2,
+                )
+            )
+            return 0
         if not args.record_error:
             raise
         reading = error_reading(str(error))

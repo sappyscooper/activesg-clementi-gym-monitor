@@ -322,8 +322,10 @@ function App() {
         .sort((a, b) => a.scrapedAt.getTime() - b.scrapedAt.getTime())
 
       setRecords(parsedRecords)
+      return parsedRecords
     } catch (loadError) {
       setError(loadError instanceof Error ? loadError.message : 'Unable to load data')
+      return records
     } finally {
       if (showLoading) {
         setLoading(false)
@@ -341,9 +343,15 @@ function App() {
     setError('')
 
     try {
+      const previousLatestScrapedAt = latest?.scrapedAt.getTime() ?? null
       const runId = await requestTrackingRun()
       await waitForTrackingRun(runId)
-      await refreshData(false)
+      const updatedRecords = await refreshData(false)
+      const updatedLatestScrapedAt = updatedRecords.at(-1)?.scrapedAt.getTime() ?? null
+
+      if (previousLatestScrapedAt !== null && updatedLatestScrapedAt === previousLatestScrapedAt) {
+        setError('Tracking completed, but no new capacity was saved. ActiveSG may be blocking the cloud scrape.')
+      }
     } catch (trackError) {
       setError(trackError instanceof Error ? trackError.message : 'Unable to run tracking')
       await refreshData(false)
