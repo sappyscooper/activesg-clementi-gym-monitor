@@ -38,7 +38,7 @@ jobs:
           python -m playwright install --with-deps chromium
 
       - name: Run scraper
-        run: xvfb-run -a python scraper.py --headed --record-error
+        run: xvfb-run -a python scraper.py --headed
 
       - name: Commit and push data
         run: |
