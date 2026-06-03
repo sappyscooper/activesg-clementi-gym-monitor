@@ -1,0 +1,6 @@
+{
+  "checked_at": "2026-06-03T15:00:27+00:00",
+  "status": "blocked",
+  "message": "ActiveSG did not return capacity data during the latest tracking attempt.",
+  "reading": null
+}

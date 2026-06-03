@@ -19,6 +19,7 @@ FACILITY_NAME = "Clementi ActiveSG Gym"
 API_FRAGMENT = "pass.getFacilityCapacities"
 CSV_PATH = Path("public/data/clementi_gym_capacity.csv")
 LATEST_JSON_PATH = Path("public/data/latest.json")
+TRACK_STATUS_PATH = Path("public/data/track_status.json")
 SGT = ZoneInfo("Asia/Singapore")
 
 
@@ -273,6 +274,23 @@ def append_reading(reading: CapacityReading) -> None:
     )
 
 
+def write_track_status(status: str, message: str, reading: CapacityReading | None = None) -> None:
+    TRACK_STATUS_PATH.parent.mkdir(parents=True, exist_ok=True)
+    TRACK_STATUS_PATH.write_text(
+        json.dumps(
+            {
+                "checked_at": isoformat(utc_now()),
+                "status": status,
+                "message": message,
+                "reading": asdict(reading) if reading else None,
+            },
+            indent=2,
+        )
+        + "\n",
+        encoding="utf-8",
+    )
+
+
 def error_reading(message: str) -> CapacityReading:
     return CapacityReading(
         scraped_at=isoformat(utc_now()),
@@ -305,6 +323,7 @@ def main() -> int:
         reading = scrape_capacity(headless=not args.headed)
     except Exception as error:
         if args.skip_on_error:
+            write_track_status("blocked", f"ActiveSG did not return capacity data: {error}")
             print(
                 json.dumps(
                     {
@@ -320,6 +339,7 @@ def main() -> int:
         reading = error_reading(str(error))
 
     append_reading(reading)
+    write_track_status("saved", "Saved a new capacity reading.", reading)
     print(json.dumps(asdict(reading), indent=2))
     return 0
 

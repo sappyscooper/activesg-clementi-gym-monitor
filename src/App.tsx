@@ -41,10 +41,24 @@ type TrackResponse = {
   error?: string
 }
 
+type TrackStatusFile = {
+  checked_at?: string
+  status?: string
+  message?: string
+}
+
+type TrackStatus = {
+  checkedAt: Date | null
+  status: string
+  message: string
+}
+
 const CSV_CONTENTS_URL =
   'https://api.github.com/repos/sappyscooper/activesg-clementi-gym-monitor/contents/public/data/clementi_gym_capacity.csv?ref=main'
 const RAW_CSV_URL =
   'https://raw.githubusercontent.com/sappyscooper/activesg-clementi-gym-monitor/main/public/data/clementi_gym_capacity.csv'
+const RAW_TRACK_STATUS_URL =
+  'https://raw.githubusercontent.com/sappyscooper/activesg-clementi-gym-monitor/main/public/data/track_status.json'
 const SG_TIME_ZONE = 'Asia/Singapore'
 const DAYS = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday']
 const HOURS = Array.from({ length: 16 }, (_, index) => index + 7)
@@ -100,6 +114,25 @@ async function fetchCsvText() {
     return await fetchRawCsvText()
   } catch {
     return fetchGitHubApiCsvText()
+  }
+}
+
+async function fetchTrackStatus() {
+  const response = await fetch(`${RAW_TRACK_STATUS_URL}?t=${Date.now()}`, {
+    cache: 'no-store',
+  })
+
+  if (!response.ok) {
+    return null
+  }
+
+  const data = (await response.json()) as TrackStatusFile
+  const checkedAt = data.checked_at ? new Date(data.checked_at) : null
+
+  return {
+    checkedAt: checkedAt && !Number.isNaN(checkedAt.getTime()) ? checkedAt : null,
+    status: data.status || 'unknown',
+    message: data.message || '',
   }
 }
 
@@ -279,6 +312,19 @@ function statusLabel(record: GymRecord | null) {
   return record.status.replaceAll('_', ' ')
 }
 
+function trackStatusLabel(trackStatus: TrackStatus | null) {
+  if (!trackStatus) {
+    return 'Not checked'
+  }
+  if (trackStatus.status === 'saved') {
+    return 'Saved reading'
+  }
+  if (trackStatus.status === 'blocked') {
+    return 'Blocked by ActiveSG'
+  }
+  return trackStatus.status.replaceAll('_', ' ')
+}
+
 function buildHeatmap(records: GymRecord[]): HourBucket[] {
   const openRecords = records.filter((record) => record.status === 'open' && record.capacityPercentage !== null)
 
@@ -303,6 +349,7 @@ function buildHeatmap(records: GymRecord[]): HourBucket[] {
 
 function App() {
   const [records, setRecords] = useState<GymRecord[]>([])
+  const [trackStatus, setTrackStatus] = useState<TrackStatus | null>(null)
   const [loading, setLoading] = useState(true)
   const [tracking, setTracking] = useState(false)
   const [error, setError] = useState('')
@@ -314,7 +361,7 @@ function App() {
     setError('')
 
     try {
-      const text = await fetchCsvText()
+      const [text, updatedTrackStatus] = await Promise.all([fetchCsvText(), fetchTrackStatus()])
       const parsedRecords = parseCsv(text)
         .map(toRecord)
         .filter((record): record is GymRecord => Boolean(record))
@@ -322,6 +369,7 @@ function App() {
         .sort((a, b) => a.scrapedAt.getTime() - b.scrapedAt.getTime())
 
       setRecords(parsedRecords)
+      setTrackStatus(updatedTrackStatus)
       return parsedRecords
     } catch (loadError) {
       setError(loadError instanceof Error ? loadError.message : 'Unable to load data')
@@ -350,7 +398,7 @@ function App() {
       const updatedLatestScrapedAt = updatedRecords.at(-1)?.scrapedAt.getTime() ?? null
 
       if (previousLatestScrapedAt !== null && updatedLatestScrapedAt === previousLatestScrapedAt) {
-        setError('Tracking completed, but no new capacity was saved. ActiveSG may be blocking the cloud scrape.')
+        setError('Tracking ran, but ActiveSG did not return a new capacity reading. Last checked was updated.')
       }
     } catch (trackError) {
       setError(trackError instanceof Error ? trackError.message : 'Unable to run tracking')
@@ -371,7 +419,7 @@ function App() {
       setError('')
 
       try {
-        const text = await fetchCsvText()
+        const [text, updatedTrackStatus] = await Promise.all([fetchCsvText(), fetchTrackStatus()])
         const parsedRecords = parseCsv(text)
           .map(toRecord)
           .filter((record): record is GymRecord => Boolean(record))
@@ -380,6 +428,7 @@ function App() {
 
         if (!ignore) {
           setRecords(parsedRecords)
+          setTrackStatus(updatedTrackStatus)
         }
       } catch (loadError) {
         if (!ignore) {
@@ -433,6 +482,7 @@ function App() {
 
   const averageCapacity = average(numericRecords.map((record) => record.capacityPercentage as number))
   const latestCapacity = latest?.status === 'open' ? latest.capacityPercentage : null
+  const lastCheckedAt = trackStatus?.checkedAt ?? latest?.scrapedAt ?? null
 
   return (
     <main className="app-shell">
@@ -474,6 +524,15 @@ function App() {
         </article>
         <article className="metric-card">
           <div className="metric-icon">
+            <RefreshCw aria-hidden="true" size={22} />
+          </div>
+          <div>
+            <span>Last checked</span>
+            <strong>{formatSgDate(lastCheckedAt)}</strong>
+          </div>
+        </article>
+        <article className="metric-card">
+          <div className="metric-icon">
             <Database aria-hidden="true" size={22} />
           </div>
           <div>
@@ -484,6 +543,11 @@ function App() {
       </section>
 
       {tracking && <p className="notice">Tracking a new reading and saving it to GitHub...</p>}
+      {!tracking && trackStatus?.status === 'blocked' && (
+        <p className="notice">
+          {trackStatus.message || 'The last tracking attempt ran, but ActiveSG did not return capacity data.'}
+        </p>
+      )}
       {error && <p className="alert">Data load error: {error}</p>}
 
       <section className="overview-grid">
@@ -514,6 +578,10 @@ function App() {
             <div>
               <dt>Observed by</dt>
               <dd>{latest?.source || 'No source yet'}</dd>
+            </div>
+            <div>
+              <dt>Tracker</dt>
+              <dd>{trackStatusLabel(trackStatus)}</dd>
             </div>
             <div>
               <dt>Average full</dt>
