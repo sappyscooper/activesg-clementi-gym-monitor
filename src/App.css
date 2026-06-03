@@ -43,6 +43,11 @@
   border-color: var(--ink-soft);
 }
 
+.icon-button:disabled {
+  cursor: wait;
+  opacity: 0.68;
+}
+
 .icon-button.secondary {
   color: var(--muted);
 }
@@ -150,6 +155,15 @@
   border-radius: 8px;
   color: var(--high);
   background: var(--high-soft);
+}
+
+.notice {
+  margin: 0 0 16px;
+  padding: 12px 14px;
+  border: 1px solid var(--border-strong);
+  border-radius: 8px;
+  color: var(--ink);
+  background: var(--accent-soft);
 }
 
 .overview-grid {

@@ -33,6 +33,14 @@ type GitHubFileResponse = {
   encoding?: string
 }
 
+type TrackResponse = {
+  ok?: boolean
+  runId?: number | string | null
+  status?: string
+  conclusion?: string | null
+  error?: string
+}
+
 const CSV_CONTENTS_URL =
   'https://api.github.com/repos/sappyscooper/activesg-clementi-gym-monitor/contents/public/data/clementi_gym_capacity.csv?ref=main'
 const RAW_CSV_URL =
@@ -41,6 +49,8 @@ const SG_TIME_ZONE = 'Asia/Singapore'
 const DAYS = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday']
 const HOURS = Array.from({ length: 16 }, (_, index) => index + 7)
 const AUTO_REFRESH_MS = 120_000
+const TRACK_POLL_MS = 5_000
+const TRACK_TIMEOUT_MS = 120_000
 
 function base64ToText(content: string) {
   const binary = window.atob(content.replace(/\s/g, ''))
@@ -91,6 +101,54 @@ async function fetchCsvText() {
   } catch {
     return fetchGitHubApiCsvText()
   }
+}
+
+async function requestTrackingRun() {
+  const response = await fetch('/api/track', {
+    method: 'POST',
+    cache: 'no-store',
+  })
+  const data = (await response.json()) as TrackResponse
+
+  if (!response.ok || !data.ok) {
+    throw new Error(data.error || `Tracking request failed with ${response.status}`)
+  }
+  if (!data.runId) {
+    throw new Error('Tracking started, but GitHub did not return a run id yet')
+  }
+
+  return String(data.runId)
+}
+
+async function fetchTrackingRun(runId: string) {
+  const response = await fetch(`/api/track?runId=${encodeURIComponent(runId)}&t=${Date.now()}`, {
+    cache: 'no-store',
+  })
+  const data = (await response.json()) as TrackResponse
+
+  if (!response.ok || !data.ok) {
+    throw new Error(data.error || `Tracking status failed with ${response.status}`)
+  }
+
+  return data
+}
+
+async function waitForTrackingRun(runId: string) {
+  const startedAt = Date.now()
+
+  while (Date.now() - startedAt < TRACK_TIMEOUT_MS) {
+    const run = await fetchTrackingRun(runId)
+    if (run.status === 'completed') {
+      if (run.conclusion === 'success') {
+        return
+      }
+      throw new Error(`Tracking run finished with ${run.conclusion || 'no conclusion'}`)
+    }
+
+    await new Promise((resolve) => setTimeout(resolve, TRACK_POLL_MS))
+  }
+
+  throw new Error('Tracking run is still running. Try refresh again in a minute.')
 }
 
 function parseCsvLine(line: string) {
@@ -246,8 +304,53 @@ function buildHeatmap(records: GymRecord[]): HourBucket[] {
 function App() {
   const [records, setRecords] = useState<GymRecord[]>([])
   const [loading, setLoading] = useState(true)
+  const [tracking, setTracking] = useState(false)
   const [error, setError] = useState('')
-  const [refreshKey, setRefreshKey] = useState(0)
+
+  async function refreshData(showLoading = true) {
+    if (showLoading) {
+      setLoading(true)
+    }
+    setError('')
+
+    try {
+      const text = await fetchCsvText()
+      const parsedRecords = parseCsv(text)
+        .map(toRecord)
+        .filter((record): record is GymRecord => Boolean(record))
+        .sort((a, b) => a.scrapedAt.getTime() - b.scrapedAt.getTime())
+
+      setRecords(parsedRecords)
+    } catch (loadError) {
+      setError(loadError instanceof Error ? loadError.message : 'Unable to load data')
+    } finally {
+      if (showLoading) {
+        setLoading(false)
+      }
+    }
+  }
+
+  async function runTrackingNow() {
+    if (tracking) {
+      return
+    }
+
+    setTracking(true)
+    setLoading(true)
+    setError('')
+
+    try {
+      const runId = await requestTrackingRun()
+      await waitForTrackingRun(runId)
+      await refreshData(false)
+    } catch (trackError) {
+      setError(trackError instanceof Error ? trackError.message : 'Unable to run tracking')
+      await refreshData(false)
+    } finally {
+      setTracking(false)
+      setLoading(false)
+    }
+  }
 
   useEffect(() => {
     let ignore = false
@@ -288,7 +391,7 @@ function App() {
       ignore = true
       window.clearInterval(intervalId)
     }
-  }, [refreshKey])
+  }, [])
 
   const latest = records.at(-1) ?? null
   const numericRecords = records.filter((record) => record.status === 'open' && record.capacityPercentage !== null)
@@ -329,9 +432,9 @@ function App() {
           <h1>Gym Crowd Monitor</h1>
         </div>
         <div className="topbar-actions">
-          <button className="icon-button" type="button" onClick={() => setRefreshKey((key) => key + 1)}>
+          <button className="icon-button" type="button" onClick={runTrackingNow} disabled={tracking}>
             <RefreshCw aria-hidden="true" size={18} />
-            Refresh
+            {tracking ? 'Tracking' : 'Refresh'}
           </button>
           <a className="icon-button secondary" href="https://activesg.gov.sg/gym-pool-crowd" target="_blank">
             <ExternalLink aria-hidden="true" size={18} />
@@ -370,6 +473,7 @@ function App() {
         </article>
       </section>
 
+      {tracking && <p className="notice">Tracking a new reading and saving it to GitHub...</p>}
       {error && <p className="alert">Data load error: {error}</p>}
 
       <section className="overview-grid">
