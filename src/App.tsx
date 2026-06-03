@@ -28,7 +28,8 @@ type HourBucket = {
   count: number
 }
 
-const CSV_URL = '/data/clementi_gym_capacity.csv'
+const CSV_URL =
+  'https://raw.githubusercontent.com/sappyscooper/activesg-clementi-gym-monitor/main/public/data/clementi_gym_capacity.csv'
 const SG_TIME_ZONE = 'Asia/Singapore'
 const DAYS = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday']
 const HOURS = Array.from({ length: 16 }, (_, index) => index + 7)

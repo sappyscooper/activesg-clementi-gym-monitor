@@ -8,7 +8,7 @@ Vite/React dashboard plus a Playwright scraper for the public ActiveSG gym crowd
 - Records `Clementi ActiveSG Gym` status and capacity percentage when available.
 - Appends readings to `public/data/clementi_gym_capacity.csv`.
 - Updates `public/data/latest.json`.
-- Renders the CSV as a Vercel-hosted dashboard.
+- Renders the GitHub-hosted CSV as a Vercel-hosted dashboard, so hourly data commits are visible without requiring an hourly Vercel rebuild.
 
 ## Local Setup
 
