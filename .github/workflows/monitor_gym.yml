@@ -45,7 +45,7 @@ jobs:
         run: |
           git config --local user.email "action@github.com"
           git config --local user.name "GitHub Action"
-          git add public/data/clementi_gym_capacity.csv public/data/latest.json
+          git add public/data/clementi_gym_capacity.csv public/data/latest.json public/data/track_status.json
           if git diff --cached --quiet; then
             echo "No data changes to commit"
             exit 0
