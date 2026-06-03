@@ -2,9 +2,9 @@ name: Monitor ActiveSG Clementi Gym Capacity
 
 on:
   schedule:
-    # 23:17 UTC = 07:17 SGT, 14:17 UTC = 22:17 SGT.
-    # Avoid minute 0 because GitHub scheduled workflows can be delayed or dropped at peak load.
-    - cron: "17 23,0,1,2,3,4,5,6,7,8,9,10,11,12,13,14 * * *"
+    # 23:17 UTC = 07:17 SGT, 14:57 UTC = 22:57 SGT.
+    # Multiple starts per hour make the monitor recover automatically if GitHub skips one scheduled run.
+    - cron: "17,37,57 23,0,1,2,3,4,5,6,7,8,9,10,11,12,13,14 * * *"
   workflow_dispatch:
 
 permissions:
