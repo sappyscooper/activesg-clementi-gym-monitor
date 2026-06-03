@@ -57,6 +57,8 @@ const CSV_CONTENTS_URL =
   'https://api.github.com/repos/sappyscooper/activesg-clementi-gym-monitor/contents/public/data/clementi_gym_capacity.csv?ref=main'
 const RAW_CSV_URL =
   'https://raw.githubusercontent.com/sappyscooper/activesg-clementi-gym-monitor/main/public/data/clementi_gym_capacity.csv'
+const TRACK_STATUS_CONTENTS_URL =
+  'https://api.github.com/repos/sappyscooper/activesg-clementi-gym-monitor/contents/public/data/track_status.json?ref=main'
 const RAW_TRACK_STATUS_URL =
   'https://raw.githubusercontent.com/sappyscooper/activesg-clementi-gym-monitor/main/public/data/track_status.json'
 const SG_TIME_ZONE = 'Asia/Singapore'
@@ -118,15 +120,39 @@ async function fetchCsvText() {
 }
 
 async function fetchTrackStatus() {
-  const response = await fetch(`${RAW_TRACK_STATUS_URL}?t=${Date.now()}`, {
-    cache: 'no-store',
-  })
+  let text = ''
 
-  if (!response.ok) {
-    return null
+  try {
+    const response = await fetch(`${TRACK_STATUS_CONTENTS_URL}&t=${Date.now()}`, {
+      cache: 'no-store',
+      headers: {
+        Accept: 'application/vnd.github+json',
+      },
+    })
+
+    if (!response.ok) {
+      throw new Error(`Tracker status fetch failed with ${response.status}`)
+    }
+
+    const file = (await response.json()) as GitHubFileResponse
+    if (file.encoding !== 'base64' || !file.content) {
+      throw new Error('Tracker status content was not returned by GitHub')
+    }
+
+    text = base64ToText(file.content)
+  } catch {
+    const response = await fetch(`${RAW_TRACK_STATUS_URL}?t=${Date.now()}`, {
+      cache: 'no-store',
+    })
+
+    if (!response.ok) {
+      return null
+    }
+
+    text = await response.text()
   }
 
-  const data = (await response.json()) as TrackStatusFile
+  const data = JSON.parse(text) as TrackStatusFile
   const checkedAt = data.checked_at ? new Date(data.checked_at) : null
 
   return {
