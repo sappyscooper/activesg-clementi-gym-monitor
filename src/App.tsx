@@ -28,11 +28,43 @@ type HourBucket = {
   count: number
 }
 
-const CSV_URL =
-  'https://raw.githubusercontent.com/sappyscooper/activesg-clementi-gym-monitor/main/public/data/clementi_gym_capacity.csv'
+type GitHubFileResponse = {
+  content?: string
+  encoding?: string
+}
+
+const CSV_CONTENTS_URL =
+  'https://api.github.com/repos/sappyscooper/activesg-clementi-gym-monitor/contents/public/data/clementi_gym_capacity.csv?ref=main'
 const SG_TIME_ZONE = 'Asia/Singapore'
 const DAYS = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday']
 const HOURS = Array.from({ length: 16 }, (_, index) => index + 7)
+const AUTO_REFRESH_MS = 120_000
+
+function base64ToText(content: string) {
+  const binary = window.atob(content.replace(/\s/g, ''))
+  const bytes = Uint8Array.from(binary, (char) => char.charCodeAt(0))
+  return new TextDecoder().decode(bytes)
+}
+
+async function fetchCsvText() {
+  const response = await fetch(`${CSV_CONTENTS_URL}&t=${Date.now()}`, {
+    cache: 'no-store',
+    headers: {
+      Accept: 'application/vnd.github+json',
+    },
+  })
+
+  if (!response.ok) {
+    throw new Error(`CSV fetch failed with ${response.status}`)
+  }
+
+  const data = (await response.json()) as GitHubFileResponse
+  if (data.encoding !== 'base64' || !data.content) {
+    throw new Error('CSV content was not returned by GitHub')
+  }
+
+  return base64ToText(data.content)
+}
 
 function parseCsvLine(line: string) {
   const values: string[] = []
@@ -193,17 +225,14 @@ function App() {
   useEffect(() => {
     let ignore = false
 
-    async function loadData() {
-      setLoading(true)
+    async function loadData(showLoading = true) {
+      if (showLoading) {
+        setLoading(true)
+      }
       setError('')
 
       try {
-        const response = await fetch(`${CSV_URL}?t=${Date.now()}`)
-        if (!response.ok) {
-          throw new Error(`CSV fetch failed with ${response.status}`)
-        }
-
-        const text = await response.text()
+        const text = await fetchCsvText()
         const parsedRecords = parseCsv(text)
           .map(toRecord)
           .filter((record): record is GymRecord => Boolean(record))
@@ -217,16 +246,20 @@ function App() {
           setError(loadError instanceof Error ? loadError.message : 'Unable to load data')
         }
       } finally {
-        if (!ignore) {
+        if (!ignore && showLoading) {
           setLoading(false)
         }
       }
     }
 
     loadData()
+    const intervalId = window.setInterval(() => {
+      loadData(false)
+    }, AUTO_REFRESH_MS)
 
     return () => {
       ignore = true
+      window.clearInterval(intervalId)
     }
   }, [refreshKey])
 
