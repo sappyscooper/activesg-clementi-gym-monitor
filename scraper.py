@@ -224,10 +224,10 @@ def scrape_capacity(headless: bool = True) -> CapacityReading:
                 return
 
         page.on("response", capture_response)
-        page.goto(SOURCE_URL, wait_until="domcontentloaded", timeout=90_000)
+        page.goto(SOURCE_URL, wait_until="domcontentloaded", timeout=45_000)
 
         try:
-            page.get_by_text(FACILITY_NAME, exact=True).wait_for(timeout=90_000)
+            page.get_by_text(FACILITY_NAME, exact=True).wait_for(timeout=45_000)
         except PlaywrightTimeoutError as error:
             title = page.title()
             body_text = page.locator("body").inner_text(timeout=5_000)
