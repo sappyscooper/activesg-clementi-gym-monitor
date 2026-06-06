@@ -1,15 +1,15 @@
 {
-  "checked_at": "2026-06-06T05:32:45+00:00",
+  "checked_at": "2026-06-06T05:43:37+00:00",
   "status": "saved",
   "message": "Saved a new capacity reading.",
   "reading": {
-    "scraped_at": "2026-06-06T05:32:45+00:00",
-    "source_updated_at": "2026-06-06T13:32:00+08:00",
+    "scraped_at": "2026-06-06T05:43:36+00:00",
+    "source_updated_at": "2026-06-06T13:43:00+08:00",
     "facility": "Clementi ActiveSG Gym",
     "status": "open",
-    "capacity_percentage": "51",
-    "badge_text": "51% full",
-    "raw_text": "{\"id\":\"EcBGtBDRSadwhso2WV0Tk\",\"name\":\"Clementi ActiveSG Gym\",\"capacityPercentage\":51,\"type\":\"gym\",\"isClosed\":false}",
+    "capacity_percentage": "54",
+    "badge_text": "54% full",
+    "raw_text": "{\"id\":\"EcBGtBDRSadwhso2WV0Tk\",\"name\":\"Clementi ActiveSG Gym\",\"capacityPercentage\":54,\"type\":\"gym\",\"isClosed\":false}",
     "source": "api_response"
   }
 }
