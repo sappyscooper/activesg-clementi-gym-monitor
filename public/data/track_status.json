@@ -1,6 +1,6 @@
 {
-  "checked_at": "2026-06-14T01:57:40+00:00",
+  "checked_at": "2026-06-14T02:06:21+00:00",
   "status": "blocked",
-  "message": "ActiveSG did not return capacity data: ActiveSG page did not render facility list. Title='Just a moment...'; body='activesg.gov.sg\\nPerforming security verification\\n\\nThis website uses a security service to protect against malicious bots. This page is displayed while the website verifies you are not a bot.\\n\\nRay ID: a0b5b8a3ba50d6c9\\nPerformance and Security by Cloudflare\\nPrivacy'",
+  "message": "ActiveSG did not return capacity data: ActiveSG page did not render facility list. Title='Just a moment...'; body='activesg.gov.sg\\nPerforming security verification\\n\\nThis website uses a security service to protect against malicious bots. This page is displayed while the website verifies you are not a bot.\\n\\nRay ID: a0b5c55a5fc5f4e3\\nPerformance and Security by Cloudflare\\nPrivacy'",
   "reading": null
 }
