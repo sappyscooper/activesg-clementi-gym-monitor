@@ -1,15 +1,6 @@
 {
-  "checked_at": "2026-06-15T08:44:00+00:00",
-  "status": "saved",
-  "message": "Saved a new capacity reading.",
-  "reading": {
-    "scraped_at": "2026-06-15T08:43:59+00:00",
-    "source_updated_at": "2026-06-15T16:43:00+08:00",
-    "facility": "Clementi ActiveSG Gym",
-    "status": "open",
-    "capacity_percentage": "72",
-    "badge_text": "72% full",
-    "raw_text": "{\"id\":\"EcBGtBDRSadwhso2WV0Tk\",\"name\":\"Clementi ActiveSG Gym\",\"capacityPercentage\":72,\"type\":\"gym\",\"isClosed\":false}",
-    "source": "api_response"
-  }
+  "checked_at": "2026-06-15T14:36:41+00:00",
+  "status": "blocked",
+  "message": "ActiveSG did not return capacity data: ActiveSG page did not render facility list. Title='Just a moment...'; body='activesg.gov.sg\\nPerforming security verification\\n\\nThis website uses a security service to protect against malicious bots. This page is displayed while the website verifies you are not a bot.\\n\\nRay ID: a0c24ddfb9d8c071\\nPerformance and Security by Cloudflare\\nPrivacy'",
+  "reading": null
 }
