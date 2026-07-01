@@ -1,10 +1,10 @@
 {
-  "checked_at": "2026-07-01T13:52:59+00:00",
+  "checked_at": "2026-07-01T13:57:40+00:00",
   "status": "saved",
   "message": "Saved a new capacity reading.",
   "reading": {
-    "scraped_at": "2026-07-01T13:52:59+00:00",
-    "source_updated_at": "2026-07-01T21:52:00+08:00",
+    "scraped_at": "2026-07-01T13:57:40+00:00",
+    "source_updated_at": "2026-07-01T21:57:00+08:00",
     "facility": "Clementi ActiveSG Gym",
     "status": "open",
     "capacity_percentage": "0",
