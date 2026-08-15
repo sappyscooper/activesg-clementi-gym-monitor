@@ -1,14 +1,14 @@
 {
-  "generated_at": "2026-08-15T03:26:37+00:00",
+  "generated_at": "2026-08-15T03:55:44+00:00",
   "source_url": "https://activesg.gov.sg/gym-pool-crowd",
   "reading": {
-    "scraped_at": "2026-08-15T03:26:37+00:00",
-    "source_updated_at": "2026-08-15T11:26:00+08:00",
+    "scraped_at": "2026-08-15T03:55:43+00:00",
+    "source_updated_at": "2026-08-15T11:55:00+08:00",
     "facility": "Clementi ActiveSG Gym",
     "status": "open",
-    "capacity_percentage": "71",
-    "badge_text": "71% full",
-    "raw_text": "{\"id\":\"EcBGtBDRSadwhso2WV0Tk\",\"name\":\"Clementi ActiveSG Gym\",\"capacityPercentage\":71,\"type\":\"gym\",\"isClosed\":false}",
+    "capacity_percentage": "75",
+    "badge_text": "75% full",
+    "raw_text": "{\"id\":\"EcBGtBDRSadwhso2WV0Tk\",\"name\":\"Clementi ActiveSG Gym\",\"capacityPercentage\":75,\"type\":\"gym\",\"isClosed\":false}",
     "source": "api_response"
   }
 }
